@@ -51,6 +51,12 @@ variable "openrouter_api_key" {
   sensitive   = true
 }
 
+variable "openrouter_model" {
+  description = "OpenRouter model to use"
+  type        = string
+  default     = "anthropic/claude-3.5-sonnet"
+}
+
 variable "use_spot_instance" {
   description = "Use spot instance for lower cost"
   type        = bool

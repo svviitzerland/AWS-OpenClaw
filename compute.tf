@@ -19,6 +19,7 @@ resource "aws_instance" "openclaw" {
 
   user_data = templatefile("${path.module}/user-data.sh", {
     openrouter_api_key = var.openrouter_api_key
+    openrouter_model   = var.openrouter_model
     openclaw_port      = var.openclaw_port
     openclaw_version   = var.openclaw_version
   })

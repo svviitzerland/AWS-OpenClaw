@@ -11,29 +11,61 @@ Deploy OpenClaw on AWS using Terraform with OpenRouter integration.
 
 ## Quick Start
 
-1. Configure AWS credentials:
+### 1. Configure AWS credentials
 ```bash
 aws configure
 ```
 
-2. Create configuration file:
+### 2. Create SSH key pair
+
+**Option A: Using AWS CLI**
+```bash
+aws ec2 create-key-pair \
+  --key-name openclaw-key \
+  --query 'KeyMaterial' \
+  --output text > ~/.ssh/openclaw-key.pem
+
+chmod 400 ~/.ssh/openclaw-key.pem
+```
+
+**Option B: Using AWS Console**
+1. Go to EC2 Console → Key Pairs
+2. Click "Create key pair"
+3. Name: `openclaw-key`
+4. Key pair type: RSA
+5. Private key format: .pem
+6. Click "Create key pair"
+7. Save the downloaded .pem file to `~/.ssh/`
+8. Run: `chmod 400 ~/.ssh/openclaw-key.pem`
+
+### 3. Create configuration file
 ```bash
 cp terraform.tfvars.example terraform.tfvars
 ```
 
-3. Edit `terraform.tfvars` with your values:
-- `key_name` - Your AWS SSH key pair name
-- `openrouter_api_key` - Your OpenRouter API key
-- `allowed_ssh_cidr` - Your IP address for SSH access
+### 4. Edit configuration
 
-4. Deploy:
+Edit `terraform.tfvars`:
+```hcl
+key_name           = "openclaw-key"  # Use the key name you created
+openrouter_api_key = "sk-or-v1-xxxxxxxxxxxxx"  # Get from https://openrouter.ai/
+openrouter_model   = "anthropic/claude-4.5-sonnet"
+allowed_ssh_cidr   = ["YOUR_IP/32"]  # Your IP for security
+```
+
+To get your IP:
+```bash
+curl https://checkip.amazonaws.com
+```
+
+### 5. Deploy:
 ```bash
 terraform init
 terraform plan
 terraform apply
 ```
 
-5. Get the URL:
+### 6. Get the URL:
 ```bash
 terraform output openclaw_url
 ```

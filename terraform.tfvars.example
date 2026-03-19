@@ -14,8 +14,9 @@ allowed_web_cidr = ["0.0.0.0/0"]
 openclaw_port    = 8080
 openclaw_version = "latest"
 
-# OpenRouter API Key - Get from https://openrouter.ai/
+# OpenRouter Configuration - Get API key from https://openrouter.ai/
 openrouter_api_key = "sk-or-v1-xxxxxxxxxxxxx"
+openrouter_model   = "anthropic/claude-4.5-sonnet"
 
 # Cost Optimization
 use_spot_instance = false

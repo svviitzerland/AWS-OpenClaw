@@ -32,12 +32,7 @@ services:
       # OpenRouter configuration
       - LLM_PROVIDER=openrouter
       - OPENROUTER_API_KEY=${openrouter_api_key}
-      - OPENROUTER_MODEL=anthropic/claude-3.5-sonnet
-
-      # Alternative models (uncomment untuk ganti model)
-      # - OPENROUTER_MODEL=anthropic/claude-3-haiku  # Lebih murah
-      # - OPENROUTER_MODEL=google/gemini-pro         # Alternatif lain
-      # - OPENROUTER_MODEL=meta-llama/llama-3-70b    # Open source
+      - OPENROUTER_MODEL=${openrouter_model}
 
       # OpenClaw settings
       - PORT=8080
@@ -94,9 +89,5 @@ SERVICE
 
 systemctl daemon-reload
 systemctl enable openclaw.service
-
-# Setup CloudWatch agent (optional, untuk monitoring)
-# wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/arm64/latest/amazon-cloudwatch-agent.deb
-# dpkg -i -E ./amazon-cloudwatch-agent.deb
 
 echo "OpenClaw installation completed!"
