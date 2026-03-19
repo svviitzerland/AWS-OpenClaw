@@ -1,0 +1,23 @@
+# AWS Configuration
+aws_region   = "ap-southeast-1"
+project_name = "openclaw"
+
+# EC2 Configuration
+instance_type = "t4g.micro"
+key_name      = "your-key-name"
+
+# Security - Replace with your IP for better security
+allowed_ssh_cidr = ["0.0.0.0/0"]
+allowed_web_cidr = ["0.0.0.0/0"]
+
+# OpenClaw Configuration
+openclaw_port    = 8080
+openclaw_version = "latest"
+
+# OpenRouter API Key - Get from https://openrouter.ai/
+openrouter_api_key = "sk-or-v1-xxxxxxxxxxxxx"
+
+# Cost Optimization
+use_spot_instance = false
+spot_max_price    = "0.01"
+use_elastic_ip    = true
