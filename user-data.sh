@@ -1,128 +1,79 @@
 #!/bin/bash
-set -x  # Debug mode instead of set -e
+set -x
 
 # Log function
 log() {
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*"
 }
 
-log "Starting OpenClaw installation..."
+log "Starting OpenClaw installation (direct)..."
 
-# Update and install Docker
-log "Installing Docker..."
+# Update system
+log "Updating system..."
 apt-get update
 apt-get upgrade -y
-curl -fsSL https://get.docker.com -o get-docker.sh
-sh get-docker.sh
-usermod -aG docker ubuntu
-apt-get install -y docker-compose-plugin
+
+# Install Node.js 24 (recommended by OpenClaw)
+log "Installing Node.js 24..."
+curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
+apt-get install -y nodejs
+
+# Verify Node installation
+node -v
+npm -v
+
+# Install OpenClaw globally
+log "Installing OpenClaw..."
+npm install -g openclaw@latest
+
+# Verify openclaw is installed
+which openclaw
+openclaw --version
 
 # Create OpenClaw directory
 log "Creating OpenClaw directory..."
-mkdir -p /opt/openclaw
-cd /opt/openclaw
+mkdir -p /home/ubuntu/.openclaw
+chown -R ubuntu:ubuntu /home/ubuntu/.openclaw
 
-# Create docker-compose.yml with proper environment variables
-log "Creating docker-compose.yml..."
-cat > docker-compose.yml <<EOF
-services:
-  openclaw:
-    image: ghcr.io/openclaw/openclaw:${openclaw_version}
-    container_name: openclaw
-    restart: unless-stopped
-    ports:
-      - "${openclaw_port}:8080"
-    volumes:
-      - openclaw-data:/home/node/.openclaw
-      - openclaw-logs:/tmp/openclaw
-    environment:
-      - OPENROUTER_API_KEY=${openrouter_api_key}
-      - OPENCLAW_AGENT_MODEL=openrouter/${openrouter_model}
-      - OPENCLAW_DEFAULT_MODEL=openrouter/${openrouter_model}
-$([ -n "${telegram_bot_token}" ] && [ "${telegram_bot_token}" != "" ] && echo "      - TELEGRAM_BOT_TOKEN=${telegram_bot_token}")
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+# Initialize OpenClaw as ubuntu user
+log "Initializing OpenClaw..."
+su - ubuntu -c "openclaw onboard --install-daemon --non-interactive --accept-risk"
 
-volumes:
-  openclaw-data:
-  openclaw-logs:
-EOF
-
-# Start container
-log "Starting OpenClaw container..."
-docker compose up -d
-
-# Wait for container to be running
-log "Waiting for container to start..."
+# Wait for daemon to start
 sleep 10
 
-# Fix volume permissions
-log "Fixing permissions..."
-docker exec --user root openclaw chown -R node:node /home/node/.openclaw || true
-docker exec --user root openclaw chown -R node:node /tmp/openclaw || true
+# Configure OpenRouter
+log "Configuring OpenRouter API key and model..."
+su - ubuntu -c "openclaw config set env.OPENROUTER_API_KEY '${openrouter_api_key}'"
+su - ubuntu -c "openclaw config set agents.defaults.model.primary 'openrouter/${openrouter_model}'"
 
-# Wait for OpenClaw to be fully ready
-log "Waiting for OpenClaw to initialize..."
-for i in {1..30}; do
-  if docker exec openclaw openclaw --version >/dev/null 2>&1; then
-    log "OpenClaw is ready!"
-    break
-  fi
-  log "Waiting... ($i/30)"
-  sleep 2
-done
-
-# Configure model explicitly
-log "Configuring model: openrouter/${openrouter_model}"
-docker exec openclaw openclaw config set agents.defaults.model.primary "openrouter/${openrouter_model}"
-docker exec openclaw openclaw config set env.OPENROUTER_API_KEY "${openrouter_api_key}"
+# Configure gateway to bind to all interfaces
+log "Configuring gateway bind..."
+su - ubuntu -c "openclaw config set gateway.bind lan"
 
 # Configure Telegram if provided
 if [ -n "${telegram_bot_token}" ] && [ "${telegram_bot_token}" != "" ]; then
   log "Configuring Telegram bot..."
-  docker exec openclaw openclaw config set channels.telegram.enabled true
-  docker exec openclaw openclaw config set channels.telegram.botToken "${telegram_bot_token}"
-  docker exec openclaw openclaw config set channels.telegram.dmPolicy pairing
-  docker exec openclaw openclaw config set channels.telegram.groupPolicy open
-  log "Telegram configured. Users need to pair with: openclaw pairing approve telegram <CODE>"
+  su - ubuntu -c "openclaw config set channels.telegram.enabled true"
+  su - ubuntu -c "openclaw config set channels.telegram.botToken '${telegram_bot_token}'"
+  su - ubuntu -c "openclaw config set channels.telegram.dmPolicy pairing"
+  su - ubuntu -c "openclaw config set channels.telegram.groupPolicy open"
+  log "Telegram configured"
 else
   log "Skipping Telegram configuration (no token provided)"
 fi
 
-# Restart to apply all config changes
-log "Restarting OpenClaw to apply configuration..."
-docker compose restart
+# Restart gateway to apply config
+log "Restarting OpenClaw gateway..."
+su - ubuntu -c "openclaw gateway restart"
 
-# Wait for final startup
-log "Waiting for final startup..."
-sleep 15
+# Wait for restart
+sleep 5
 
-# Setup systemd service
-log "Setting up systemd service..."
-cat > /etc/systemd/system/openclaw.service <<'SERVICE'
-[Unit]
-Description=OpenClaw Service
-Requires=docker.service
-After=docker.service
+# Check status
+log "Checking OpenClaw status..."
+su - ubuntu -c "openclaw gateway status"
 
-[Service]
-Type=oneshot
-RemainAfterExit=yes
-WorkingDirectory=/opt/openclaw
-ExecStart=/usr/bin/docker compose up -d
-ExecStop=/usr/bin/docker compose down
-TimeoutStartSec=0
-
-[Install]
-WantedBy=multi-user.target
-SERVICE
-
-systemctl daemon-reload
-systemctl enable openclaw.service
-
-log "OpenClaw installation completed successfully!"
+log "OpenClaw installation completed!"
 log "Access OpenClaw at http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):${openclaw_port}"
+log "Check logs with: su - ubuntu -c 'openclaw logs --follow'"
