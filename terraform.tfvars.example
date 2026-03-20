@@ -3,7 +3,7 @@ aws_region   = "ap-southeast-1"
 project_name = "openclaw"
 
 # EC2 Configuration
-instance_type = "t4g.micro"
+instance_type = "t4g.medium"
 key_name      = "your-key-name"
 
 # Security - Replace with your IP for better security
@@ -18,7 +18,10 @@ openclaw_version = "latest"
 openrouter_api_key = "sk-or-v1-xxxxxxxxxxxxx"
 openrouter_model   = "anthropic/claude-4.5-sonnet"
 
+# Telegram Integration (optional) - Get bot token from @BotFather
+telegram_bot_token = ""
+
 # Cost Optimization
-use_spot_instance = false
-spot_max_price    = "0.01"
-use_elastic_ip    = true
+use_spot_instance = true
+spot_max_price    = "0.025"  # Minimum 0.0174 for t4g.medium
+use_elastic_ip    = false

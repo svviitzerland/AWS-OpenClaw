@@ -13,7 +13,7 @@ variable "project_name" {
 variable "instance_type" {
   description = "EC2 instance type"
   type        = string
-  default     = "t4g.micro"
+  default     = "t4g.medium"
 }
 
 variable "key_name" {
@@ -57,6 +57,13 @@ variable "openrouter_model" {
   default     = "anthropic/claude-3.5-sonnet"
 }
 
+variable "telegram_bot_token" {
+  description = "Telegram bot token (optional)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
 variable "use_spot_instance" {
   description = "Use spot instance for lower cost"
   type        = bool
@@ -66,7 +73,7 @@ variable "use_spot_instance" {
 variable "spot_max_price" {
   description = "Maximum spot instance price per hour"
   type        = string
-  default     = "0.01"
+  default     = "0.025"
 }
 
 variable "use_elastic_ip" {

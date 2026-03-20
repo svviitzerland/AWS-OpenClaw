@@ -11,8 +11,9 @@ resource "aws_instance" "openclaw" {
     content {
       market_type = "spot"
       spot_options {
-        max_price          = var.spot_max_price
-        spot_instance_type = "persistent"
+        max_price                      = var.spot_max_price
+        spot_instance_type             = "persistent"
+        instance_interruption_behavior = "stop"
       }
     }
   }
@@ -22,6 +23,7 @@ resource "aws_instance" "openclaw" {
     openrouter_model   = var.openrouter_model
     openclaw_port      = var.openclaw_port
     openclaw_version   = var.openclaw_version
+    telegram_bot_token = var.telegram_bot_token
   })
 
   root_block_device {
